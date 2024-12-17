@@ -42,7 +42,7 @@ def recommend_course():
     user_answers = data['answers']
     
     # Load data from a spreadsheet
-    filepath = r'C:\Users\User\QuestionnaireResultsHelper.xlsx'
+    filepath = r'C:\Users\User\CourseRecMK4\Server\QuestionnaireResultsHelper.xlsx'
     df = load_data(filepath)
     
     if df is None:
