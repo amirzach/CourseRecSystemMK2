@@ -4,6 +4,8 @@ import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from openpyxl import load_workbook
 
 app = Flask(__name__)
 CORS(app)
@@ -26,21 +28,17 @@ def preprocess_data(file_path):
         )
         print("Normalized columns:", data.columns.tolist())  # Debugging step
 
-        # Drop unnecessary columns
-        columns_to_drop = ['ANGKA GILIRAN', 'NAMA']
-        data_cleaned = data.drop(columns=columns_to_drop, errors='ignore')
-
         # Ensure all grades are numeric
-        grade_columns = data_cleaned.columns.difference(['RECOMMENDED COURSES'])
+        grade_columns = data.columns.difference(['RECOMMENDED COURSES'])
         for col in grade_columns:
-            data_cleaned[col] = pd.to_numeric(data_cleaned[col], errors='coerce').fillna(0)
+            data[col] = pd.to_numeric(data[col], errors='coerce').fillna(0)
 
         # Split 'RECOMMENDED_COURSES' into lists for multi-label classification
-        data_cleaned['RECOMMENDED COURSES'] = data_cleaned['RECOMMENDED COURSES'].apply(
+        data['RECOMMENDED COURSES'] = data['RECOMMENDED COURSES'].apply(
             lambda x: x.split(', ') if isinstance(x, str) else []
         )
 
-        return data_cleaned
+        return data
     except KeyError as e:
         raise KeyError(f"Column not found: {e}")
     except Exception as e:
@@ -75,8 +73,6 @@ def assign_course(row):
             recommended_courses.append('Education')
         if row.get('PERNIAGAAN', 0) >= 3.5 and row.get('SEJARAH', 0) >= 3.5:
             recommended_courses.append('Travel and Hospitality')
-        if not recommended_courses:
-            recommended_courses.append('General')
         return recommended_courses
     except Exception as e:
         raise Exception(f"Error in assign_course: {e}")
@@ -91,6 +87,29 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 model = DecisionTreeClassifier(random_state=42)
 model.fit(X_train, y_train)
 course_labels = y.columns.tolist()
+
+def calculate_accuracy():
+    y_pred = model.predict(X_test)
+    return accuracy_score(y_test, y_pred)
+
+accuracy_percentage = calculate_accuracy() * 100
+
+def append_to_spreadsheet(input_data, recommended_courses):
+    try:
+        workbook = load_workbook(file_path)
+        sheet = workbook.active
+
+        # Prepare the new row data
+        row_data = [input_data.get(subject, "") for subject in X.columns]  # Input grades
+        row_data.append(", ".join(recommended_courses))  # Recommended courses column
+
+        # Append the new row
+        sheet.append(row_data)
+
+        # Save the updated file
+        workbook.save(file_path)
+    except Exception as e:
+        raise Exception(f"Error updating spreadsheet: {e}")
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
@@ -114,9 +133,18 @@ def recommend():
 
         # Make multi-label predictions
         predictions = model.predict(input_df)
-        recommended_courses = [course_labels[i] for i, val in enumerate(predictions[0]) if val == 1]
+        predicted_courses = [course_labels[i] for i in range(len(course_labels)) if predictions[0][i] == 1]
 
-        return jsonify({"recommended_courses": recommended_courses})
+        # Combine and deduplicate results
+        recommended_courses = list(set(predicted_courses))
+
+        # Update the spreadsheet
+        append_to_spreadsheet(input_data, recommended_courses)
+
+        return jsonify({
+            "recommended_courses": recommended_courses,
+            "model_accuracy": f"{accuracy_percentage:.2f}%"
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
