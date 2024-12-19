@@ -21,7 +21,10 @@ const App = () => {
     });
 
     const [recommendations, setRecommendations] = useState([]);
+    const [accuracy, setAccuracy] = useState('');
     const [error, setError] = useState('');
+
+    const gradeOptions = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C', 'D', 'E', 'F'];
 
     // Update grades based on user input
     const handleInputChange = (e) => {
@@ -42,6 +45,7 @@ const App = () => {
             // Ensure recommendations are an array
             if (response.data.recommended_courses && Array.isArray(response.data.recommended_courses)) {
                 setRecommendations(response.data.recommended_courses);
+                setAccuracy(response.data.model_accuracy);
                 setError('');
             } else {
                 throw new Error('Unexpected response format');
@@ -49,6 +53,7 @@ const App = () => {
         } catch (err) {
             setError(err.response ? err.response.data.error : 'An error occurred');
             setRecommendations([]);
+            setAccuracy('');
         }
     };
 
@@ -61,19 +66,22 @@ const App = () => {
                         <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>
                             {subject}:
                         </label>
-                        <input
-                            type="text"
+                        <select
                             name={subject}
                             value={grades[subject]}
                             onChange={handleInputChange}
-                            placeholder="Enter grade (e.g., A+, A, B+)"
                             style={{
                                 width: '100%',
                                 padding: '8px',
                                 borderRadius: '4px',
                                 border: '1px solid #ccc',
                             }}
-                        />
+                        >
+                            <option value="">Select Grade</option>
+                            {gradeOptions.map((grade) => (
+                                <option key={grade} value={grade}>{grade}</option>
+                            ))}
+                        </select>
                     </div>
                 ))}
                 <button
@@ -107,6 +115,11 @@ const App = () => {
                             </li>
                         ))}
                     </ul>
+                    {accuracy && (
+                        <p style={{ marginTop: '20px', fontWeight: 'bold' }}>
+                            Model Accuracy: {accuracy}
+                        </p>
+                    )}
                 </div>
             )}
         </div>
