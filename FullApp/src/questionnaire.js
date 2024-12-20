@@ -197,26 +197,98 @@ const SecondApp = () => {
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Interest-Based Recommendation</h1>
+    <div
+      style={{
+        maxWidth: "800px",
+        margin: "50px auto",
+        padding: "20px",
+        borderRadius: "10px",
+        boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+        backgroundColor: "#f9f9f9",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <h1
+        style={{
+          textAlign: "center",
+          color: "#333",
+          marginBottom: "20px",
+        }}
+      >
+        Interest-Based Recommendation
+      </h1>
       <form onSubmit={handleSubmit}>
         {questions.map((q, index) => (
-          <div key={index}>
-            <label>{q.question}</label>
-            {q.options.map((option, i) => (
-              <label key={i}>
-                <input
-                  type="radio"
-                  name={`question_${index}`}
-                  value={option}
-                  onChange={() => handleChange(index, option)}
-                />
-                {option}
-              </label>
-            ))}
+          <div
+            key={index}
+            style={{
+              marginBottom: "20px",
+              padding: "10px",
+              border: "1px solid #ddd",
+              borderRadius: "5px",
+              backgroundColor: "#fff",
+            }}
+          >
+            <label
+              style={{
+                display: "block",
+                fontWeight: "bold",
+                marginBottom: "10px",
+                color: "#555",
+              }}
+            >
+              {q.question}
+            </label>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              {q.options.map((option, i) => (
+                <label
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    fontSize: "16px",
+                    color: "#333",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name={`question_${index}`}
+                    value={option}
+                    onChange={() => handleChange(index, option)}
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                    }}
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
           </div>
         ))}
-        <button type="submit">Submit</button>
+        <button
+          type="submit"
+          style={{
+            width: "100%",
+            padding: "12px",
+            backgroundColor: "#007BFF",
+            color: "#fff",
+            fontSize: "16px",
+            fontWeight: "bold",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Submit
+        </button>
       </form>
     </div>
   );
