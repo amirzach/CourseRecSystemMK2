@@ -73,7 +73,7 @@ def assign_course(row):
     except Exception as e:
         raise Exception(f"Error in assign_course: {e}")
 
-file_path1 = r'C:\Users\User\CourseRecMK3\Server\recommended_courses_ml_multiple.xlsx'
+file_path1 = r'C:\Users\User\CourseRecMK5\Server\recommended_courses_ml_multiple.xlsx'
 data_cleaned = preprocess_data(file_path1)
 
 X = data_cleaned.drop(columns=['RECOMMENDED COURSES'], errors='ignore')
@@ -150,7 +150,7 @@ def recommend_course():
     try:
         data = request.get_json()
         user_answers = data['answers']
-        filepath2 = r'C:\Users\User\CourseRecMK4\Server\QuestionnaireResultsHelper.xlsx'
+        filepath2 = r'C:\Users\User\CourseRecMK5\Server\QuestionnaireResultsHelper.xlsx'
         df = load_data(filepath2)
         X = df.drop(columns=["Course"])
         y = df["Course"]
@@ -169,6 +169,52 @@ def recommend_course():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/final_recommendation', methods=['POST'])
+def final_recommendation():
+    try:
+        # Input data from request
+        input_data = request.get_json()
+        
+        # Fetch first app data recommendations
+        for subject, grade in input_data.get("grades", {}).items():
+            input_data["grades"][subject] = grade_to_numeric(grade)
+        input_df = pd.DataFrame([input_data["grades"]])
+        input_df = input_df[X.columns]
+        predictions = model.predict(input_df)
+        predicted_courses = [course_labels[i] for i in range(len(course_labels)) if predictions[0][i] == 1]
+        
+        # Fetch second app data recommendations
+        user_answers = input_data.get("answers", [])
+        df = load_data(filepath2)
+        X = df.drop(columns=["Course"])
+        y = df["Course"]
+        le = LabelEncoder()
+        y_encoded = le.fit_transform(y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
+        model_dt = train_decision_tree(X_train, y_train)
+        user_answers_df = pd.DataFrame([user_answers], columns=X.columns)
+        prediction = model_dt.predict(user_answers_df)
+        recommended_course_dt = le.inverse_transform(prediction)[0]
+        recommended_course_cb = content_based_filtering(df, user_answers)
+        
+        # Match courses between both recommendations
+        matched_courses = set(predicted_courses) & {recommended_course_dt, recommended_course_cb}
+        final_courses = list(matched_courses) if matched_courses else [recommended_course_dt, recommended_course_cb]
+        
+        return jsonify({
+            "first_app_data": {
+                "recommendations": predicted_courses,
+                "model_accuracy": f"{accuracy_percentage:.2f}%"
+            },
+            "second_app_data": {
+                "decision_tree_recommendation": recommended_course_dt,
+                "content_based_recommendation": recommended_course_cb
+            },
+            "final_recommendations": final_courses
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500   
 
 if __name__ == "__main__":
     app.run(debug=True)
