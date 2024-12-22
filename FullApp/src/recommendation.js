@@ -5,6 +5,22 @@ const Recommendation = () => {
   const location = useLocation();
   const { firstAppData, secondAppData } = location.state || {};
 
+  // Determine the final recommendation based on the match
+  const getFinalRecommendation = () => {
+    if (!firstAppData || !secondAppData) return null;
+
+    const matchedCourses = firstAppData.recommendations.filter(course =>
+      secondAppData.decision_tree_recommendation === course ||
+      secondAppData.content_based_recommendation === course
+    );
+
+    return matchedCourses.length > 0
+      ? matchedCourses
+      : [secondAppData.decision_tree_recommendation, secondAppData.content_based_recommendation];
+  };
+
+  const finalRecommendation = getFinalRecommendation();
+
   return (
     <div
       style={{
@@ -74,6 +90,7 @@ const Recommendation = () => {
       {secondAppData && (
         <div
           style={{
+            marginBottom: "20px",
             padding: "15px",
             border: "1px solid #ddd",
             borderRadius: "5px",
@@ -109,6 +126,41 @@ const Recommendation = () => {
           >
             <strong>Content-Based Filtering:</strong> {secondAppData.content_based_recommendation}
           </p>
+        </div>
+      )}
+
+      {finalRecommendation && (
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "15px",
+            border: "1px solid #ddd",
+            borderRadius: "5px",
+            backgroundColor: "#fff",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "18px",
+              fontWeight: "bold",
+              color: "#555",
+              marginBottom: "10px",
+            }}
+          >
+            Final Recommendations:
+          </h2>
+          <ul
+            style={{
+              listStyleType: "disc",
+              paddingLeft: "20px",
+              color: "#333",
+              lineHeight: "1.6",
+            }}
+          >
+            {finalRecommendation.map((course, index) => (
+              <li key={index}>{course}</li>
+            ))}
+          </ul>
         </div>
       )}
 
