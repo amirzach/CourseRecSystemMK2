@@ -239,6 +239,9 @@ function App() {
           <p>
             <strong>Content-Based Filtering suggests:</strong> {recommendation.content_based_recommendation}
           </p>
+          <p>
+            <strong>Model Accuracy:</strong> {recommendation.accuracy.toFixed(2)}%
+          </p>
         </div>
       )}
     </div>
