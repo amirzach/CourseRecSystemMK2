@@ -232,16 +232,22 @@ function App() {
       {recommendation && (
         <div>
           <h2>Recommendation Results:</h2>
-          <pre>{JSON.stringify(recommendation, null, 2)}</pre>
-          <p>
-            <strong>Decision Tree AI suggests:</strong> {recommendation.decision_tree_recommendation}
-          </p>
-          <p>
-            <strong>Content-Based Filtering suggests:</strong> {recommendation.content_based_recommendation}
-          </p>
-          <p>
-            <strong>Model Accuracy:</strong> {recommendation.accuracy.toFixed(2)}%
-          </p>
+          
+          <div>
+            <h3>Top Course Recommendations (Decision Tree):</h3>
+            <ul>
+              {recommendation.decision_tree_recommendations.map((rec, index) => (
+                <li key={index}>
+                  <strong>{rec.course}</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3>Model Performance:</h3>
+            <p><strong> Accuracy:</strong> {(recommendation.cross_val_accuracy * 100).toFixed(2)}%</p>
+          </div>
         </div>
       )}
     </div>
